@@ -1,18 +1,30 @@
-# Guitar Tilt
+# Tilt Guitar
 
-기울기 센서를 이용한 웹 기타 악기
+기울기 센서를 이용한 기타 악기 프로젝트
 
-## 기능
-- 기기를 기울여서 음 높낮이 조절
-- Karplus-Strong 알고리즘 기반 기타 소리 합성
-- 데스크톱: 마우스 폴백 지원
+## 구성
 
-## 실행 방법
-1. `npx serve src` 또는 Live Server로 `src/index.html` 실행
-2. 모바일: 같은 와이파이에서 `http://IP:포트` 접속
-3. "시작" 버튼 누르고 기울여서 연주
+### desktop/ - 맥북용 (Python)
+- SMS 가속도계로 맥북 기울기 감지
+- Karplus-Strong 알고리즘 기타 합성
+- Intel 맥북 전용 (SMS 센서 필요)
+
+```bash
+cd desktop
+pip3 install -r requirements.txt
+python3 main.py
+```
+
+### web/ - 모바일용 (웹앱)
+- DeviceOrientation API로 핸드폰 기울기 감지
+- Web Audio API 기타 합성
+- 데스크톱에서는 마우스 폴백
+
+```bash
+cd web
+npx serve src
+```
 
 ## 기술 스택
-- HTML / CSS / JavaScript (순수 웹)
-- Web Audio API
-- DeviceOrientation API
+- Python: numpy, sounddevice, pyobjc-framework-IOKit
+- Web: HTML/CSS/JavaScript, Web Audio API, DeviceOrientation API
