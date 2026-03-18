@@ -1,0 +1,8 @@
+{
+  "name": "guitar-tilt",
+  "version": "1.0.0",
+  "description": "기울기 센서를 이용한 웹 기타 악기",
+  "scripts": {
+    "start": "npx serve src"
+  }
+}
