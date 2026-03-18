@@ -2,23 +2,22 @@ import { initAudio, strumChord, getNoteName } from './guitar.js';
 import { initTilt, isMouseMode } from './tilt.js';
 
 const NUM_STRINGS = 6;
-const NUM_FRETS = 5; // 0(개방현) ~ 4
+const NUM_FRETS = 5;
 const fretboard = document.getElementById('fretboard');
 const noteDisplay = document.getElementById('note-display');
 const tiltInfo = document.getElementById('tilt-info');
 const startBtn = document.getElementById('start');
 
-let activeTouches = []; // [{stringIdx, fret}]
+let activeTouches = [];
 let started = false;
 
-// --- 지판 그리기 ---
 function drawFretboard() {
+  fretboard.innerHTML = '';
   const w = fretboard.clientWidth;
   const h = fretboard.clientHeight;
   const stringGap = h / (NUM_STRINGS + 1);
   const fretGap = w / NUM_FRETS;
 
-  // 프렛 선
   for (let f = 1; f < NUM_FRETS; f++) {
     const line = document.createElement('div');
     line.className = 'fret-line';
@@ -32,14 +31,13 @@ function drawFretboard() {
     fretboard.appendChild(label);
   }
 
-  // 줄
   const stringNames = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
   for (let s = 0; s < NUM_STRINGS; s++) {
     const line = document.createElement('div');
     line.className = 'string-line';
     line.dataset.string = s;
     line.style.top = `${(s + 1) * stringGap}px`;
-    line.style.height = `${1 + s * 0.5}px`; // 아래줄일수록 두꺼움
+    line.style.height = `${2 + s * 0.8}px`;
     fretboard.appendChild(line);
 
     const label = document.createElement('div');
@@ -50,7 +48,6 @@ function drawFretboard() {
   }
 }
 
-// --- 터치 → 줄/프렛 매핑 ---
 function posToStringFret(x, y) {
   const rect = fretboard.getBoundingClientRect();
   const relX = x - rect.left;
@@ -66,7 +63,6 @@ function posToStringFret(x, y) {
   return { stringIdx, fret };
 }
 
-// --- 터치 표시 ---
 function updateTouchDots() {
   fretboard.querySelectorAll('.touch-dot').forEach(d => d.remove());
   fretboard.querySelectorAll('.string-line').forEach(l => l.classList.remove('active'));
@@ -91,7 +87,6 @@ function updateTouchDots() {
     .join(' + ') || '';
 }
 
-// --- 멀티터치 이벤트 ---
 function handleTouches(e) {
   e.preventDefault();
   activeTouches = [];
@@ -102,7 +97,6 @@ function handleTouches(e) {
   updateTouchDots();
 }
 
-// 마우스 폴백 (데스크톱)
 let mouseDown = false;
 function handleMouseDown(e) {
   mouseDown = true;
@@ -125,15 +119,19 @@ function handleMouseUp() {
   updateTouchDots();
 }
 
-// --- 시작 ---
 startBtn.addEventListener('click', () => {
   if (started) return;
   started = true;
   initAudio();
 
-  drawFretboard();
+  // 시작 후 텍스트 숨기기
+  document.getElementById('title').classList.add('hidden');
+  document.getElementById('info').classList.add('hidden');
+  startBtn.classList.add('hidden');
 
-  // 터치 이벤트
+  drawFretboard();
+  window.addEventListener('resize', drawFretboard);
+
   fretboard.addEventListener('touchstart', handleTouches);
   fretboard.addEventListener('touchmove', handleTouches);
   fretboard.addEventListener('touchend', (e) => {
@@ -142,7 +140,6 @@ startBtn.addEventListener('click', () => {
     updateTouchDots();
   });
 
-  // 마우스 폴백
   fretboard.addEventListener('mousedown', handleMouseDown);
   fretboard.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
@@ -150,12 +147,7 @@ startBtn.addEventListener('click', () => {
   initTilt((direction, beta) => {
     if (activeTouches.length > 0) {
       strumChord(activeTouches, direction);
-      tiltInfo.textContent = `기울기: ${beta}° | 스트럼!`;
-    } else {
-      tiltInfo.textContent = `기울기: ${beta}°`;
+      tiltInfo.textContent = `스트럼!`;
     }
   });
-
-  startBtn.textContent = isMouseMode() ? '줄 잡고 클릭하여 연주' : '줄 잡고 기울여서 연주';
-  startBtn.disabled = true;
 });
