@@ -1,22 +1,25 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
   background: #1a1a2e;
   color: #eee;
   font-family: -apple-system, sans-serif;
   user-select: none;
   touch-action: none;
-  overflow: hidden;
 }
 
-#app { text-align: center; width: 100%; height: 100vh; display: flex; flex-direction: column; }
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
 #top-bar {
   padding: 0.5rem;
+  text-align: center;
   flex-shrink: 0;
 }
 
@@ -34,18 +37,14 @@ body {
   cursor: pointer;
 }
 
-#start:disabled { background: #555; font-size: 0.8rem; }
-
-/* 시작 후 숨길 요소 */
 .hidden { display: none !important; }
 
 #fretboard {
   flex: 1;
   position: relative;
   background: #2a1a0a;
-  border-radius: 8px;
-  margin: 0.3rem;
-  overflow: hidden;
+  margin: 0;
+  min-height: 0;
 }
 
 .fret-line {
@@ -94,14 +93,14 @@ body {
 #bottom-bar {
   flex-shrink: 0;
   padding: 0.3rem;
-  min-height: 2.5rem;
+  text-align: center;
+  min-height: 1.5rem;
 }
 
 #note-display {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: bold;
   color: #e94560;
-  min-height: 1.2em;
 }
 
 #tilt-info { font-size: 0.7rem; color: #666; }
