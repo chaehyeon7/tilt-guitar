@@ -1,12 +1,9 @@
 // Karplus-Strong 기타 합성
-const NOTES = {
-  'E2': 82.41, 'F2': 87.31, 'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
-  'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00,
-  'A3': 220.00, 'B3': 246.94, 'C4': 261.63, 'D4': 293.66, 'E4': 329.63
-};
+// 표준 튜닝 기타: 6줄 x 프렛 0~4
+// 줄: E2(82.41), A2(110), D3(146.83), G3(196), B3(246.94), E4(329.63)
 
-const NOTE_NAMES = Object.keys(NOTES);
-const NOTE_FREQS = Object.values(NOTES);
+const OPEN_STRINGS = [329.63, 246.94, 196.00, 146.83, 110.00, 82.41]; // 1번줄~6번줄
+const SEMITONE = Math.pow(2, 1 / 12);
 
 let audioCtx = null;
 
@@ -14,20 +11,30 @@ export function initAudio() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
 
-export function pluck(freq) {
+export function getFreq(stringIdx, fret) {
+  return OPEN_STRINGS[stringIdx] * Math.pow(SEMITONE, fret);
+}
+
+export function getNoteName(stringIdx, fret) {
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const base = [64, 59, 55, 50, 45, 40]; // MIDI numbers for open strings
+  const midi = base[stringIdx] + fret;
+  return names[midi % 12] + Math.floor(midi / 12 - 1);
+}
+
+export function pluck(freq, volume = 0.8) {
   if (!audioCtx) return;
 
   const sampleRate = audioCtx.sampleRate;
   const bufferSize = Math.round(sampleRate / freq);
-  const buffer = audioCtx.createBuffer(1, sampleRate * 2, sampleRate);
+  const duration = 2;
+  const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
   const data = buffer.getChannelData(0);
 
-  // 초기 노이즈 버스트
   for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1;
+    data[i] = (Math.random() * 2 - 1) * volume;
   }
 
-  // Karplus-Strong: 이전 두 샘플 평균 + 감쇠
   for (let i = bufferSize; i < data.length; i++) {
     data[i] = (data[i - bufferSize] + data[i - bufferSize + 1]) * 0.498;
   }
@@ -38,9 +45,14 @@ export function pluck(freq) {
   source.start();
 }
 
-export function getNoteFromAngle(angle) {
-  // -90 ~ 90도 → 0 ~ 14 인덱스
-  const clamped = Math.max(-90, Math.min(90, angle));
-  const idx = Math.round(((clamped + 90) / 180) * (NOTE_NAMES.length - 1));
-  return { name: NOTE_NAMES[idx], freq: NOTE_FREQS[idx] };
+export function strumChord(touches, direction = 1) {
+  if (!touches.length) return;
+  const sorted = direction > 0
+    ? [...touches].sort((a, b) => b.stringIdx - a.stringIdx)
+    : [...touches].sort((a, b) => a.stringIdx - b.stringIdx);
+
+  sorted.forEach((t, i) => {
+    const freq = getFreq(t.stringIdx, t.fret);
+    setTimeout(() => pluck(freq), i * 30);
+  });
 }
