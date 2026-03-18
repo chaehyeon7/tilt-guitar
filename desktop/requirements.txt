@@ -1,3 +1,2 @@
 numpy
 sounddevice
-pyobjc-framework-IOKit
