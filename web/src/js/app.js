@@ -1,4 +1,4 @@
-import { initAudio, strumChord, getNoteName } from './guitar.js';
+import { initAudio, strumChord, getNoteName, buildFullChord } from './guitar.js';
 import { initTilt, isMouseMode } from './tilt.js';
 
 const NUM_STRINGS = 6;
@@ -63,28 +63,36 @@ function posToStringFret(x, y) {
   return { stringIdx, fret };
 }
 
-function updateTouchDots() {
+function updateDisplay() {
   fretboard.querySelectorAll('.touch-dot').forEach(d => d.remove());
-  fretboard.querySelectorAll('.string-line').forEach(l => l.classList.remove('active'));
+
+  // 모든 줄 활성화 (개방현 포함)
+  fretboard.querySelectorAll('.string-line').forEach(l => l.classList.add('active'));
 
   const rect = fretboard.getBoundingClientRect();
   const stringGap = rect.height / (NUM_STRINGS + 1);
   const fretGap = rect.width / NUM_FRETS;
 
+  // 터치한 위치만 도트 표시
   activeTouches.forEach(t => {
     const dot = document.createElement('div');
     dot.className = 'touch-dot';
     dot.style.left = `${t.fret * fretGap + fretGap / 2}px`;
     dot.style.top = `${(t.stringIdx + 1) * stringGap}px`;
     fretboard.appendChild(dot);
-
-    const line = fretboard.querySelector(`.string-line[data-string="${t.stringIdx}"]`);
-    if (line) line.classList.add('active');
   });
 
-  noteDisplay.textContent = activeTouches
+  // 6줄 전체 음 표시
+  const chord = buildFullChord(activeTouches);
+  noteDisplay.textContent = chord
     .map(t => getNoteName(t.stringIdx, t.fret))
-    .join(' + ') || '';
+    .join(' + ');
+}
+
+function clearDisplay() {
+  fretboard.querySelectorAll('.touch-dot').forEach(d => d.remove());
+  fretboard.querySelectorAll('.string-line').forEach(l => l.classList.remove('active'));
+  noteDisplay.textContent = '';
 }
 
 function handleTouches(e) {
@@ -94,7 +102,7 @@ function handleTouches(e) {
     const sf = posToStringFret(touch.clientX, touch.clientY);
     if (sf) activeTouches.push(sf);
   }
-  updateTouchDots();
+  updateDisplay();
 }
 
 let mouseDown = false;
@@ -103,20 +111,20 @@ function handleMouseDown(e) {
   activeTouches = [];
   const sf = posToStringFret(e.clientX, e.clientY);
   if (sf) activeTouches.push(sf);
-  updateTouchDots();
+  updateDisplay();
 }
 function handleMouseMove(e) {
   if (!mouseDown) return;
   const sf = posToStringFret(e.clientX, e.clientY);
   if (sf && !activeTouches.find(t => t.stringIdx === sf.stringIdx && t.fret === sf.fret)) {
     activeTouches.push(sf);
-    updateTouchDots();
+    updateDisplay();
   }
 }
 function handleMouseUp() {
   mouseDown = false;
   activeTouches = [];
-  updateTouchDots();
+  clearDisplay();
 }
 
 startBtn.addEventListener('click', () => {
@@ -124,7 +132,6 @@ startBtn.addEventListener('click', () => {
   started = true;
   initAudio();
 
-  // 시작 후 텍스트 숨기기
   document.getElementById('title').classList.add('hidden');
   document.getElementById('info').classList.add('hidden');
   startBtn.classList.add('hidden');
@@ -137,7 +144,7 @@ startBtn.addEventListener('click', () => {
   fretboard.addEventListener('touchend', (e) => {
     e.preventDefault();
     activeTouches = [];
-    updateTouchDots();
+    clearDisplay();
   });
 
   fretboard.addEventListener('mousedown', handleMouseDown);
@@ -146,8 +153,8 @@ startBtn.addEventListener('click', () => {
 
   initTilt((direction, beta) => {
     if (activeTouches.length > 0) {
-      strumChord(activeTouches, direction);
-      tiltInfo.textContent = `스트럼!`;
+      const chord = strumChord(activeTouches, direction);
+      tiltInfo.textContent = 'strum!';
     }
   });
 });
